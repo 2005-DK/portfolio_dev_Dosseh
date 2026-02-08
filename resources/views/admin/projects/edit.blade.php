@@ -1,0 +1,214 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Modifier Projet - Admin Dashboard')
+
+@section('content')
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <!-- Header -->
+    <div class="sticky top-0 z-40 border-b border-purple-500/30 bg-slate-900/80 backdrop-blur-lg">
+        <div class="px-6 py-4">
+            <h1 class="text-3xl font-bold text-white">Modifier le projet</h1>
+        </div>
+    </div>
+
+    <div class="p-6 max-w-4xl mx-auto">
+        <div class="group relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl blur opacity-20"></div>
+            <div class="relative bg-slate-800 border border-slate-700 rounded-xl p-8">
+                <form action="{{ route('admin.projects.update', $project) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    @csrf
+                    @method('PUT')
+
+                    <!-- Titre -->
+                    <div>
+                        <label class="block text-sm font-semibold text-white mb-2">Titre du Projet *</label>
+                        <input type="text" name="title" value="{{ old('title', $project->title) }}" required class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors @error('title') border-red-500 @enderror" placeholder="Mon super projet...">
+                        @error('title')
+                        <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm font-semibold text-white mb-2">Description *</label>
+                        <textarea name="description" rows="4" required class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors @error('description') border-red-500 @enderror" placeholder="Décrivez votre projet...">{{ old('description', $project->description) }}</textarea>
+                        @error('description')
+                        <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Grille 2 colonnes -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Technologies -->
+                        <div>
+                            <label class="block text-sm font-semibold text-white mb-2">Technologies (séparées par des virgules)</label>
+                            <input type="text" name="technologies" value="{{ is_array(old('technologies')) ? implode(', ', old('technologies')) : (old('technologies') ?? (is_array($project->technologies) ? implode(', ', $project->technologies) : $project->technologies)) }}" placeholder="Laravel, React, Tailwind..." class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors">
+                            <p class="text-xs text-gray-400 mt-1">ex: Laravel, React, Tailwind CSS</p>
+                        </div>
+
+                        <!-- URL Projet -->
+                        <div>
+                            <label class="block text-sm font-semibold text-white mb-2">URL du Projet</label>
+                            <input type="url" name="url" value="{{ old('url', $project->url) }}" placeholder="https://example.com" class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors">
+                        </div>
+
+                        <!-- GitHub URL -->
+                        <div>
+                            <label class="block text-sm font-semibold text-white mb-2">URL GitHub</label>
+                            <input type="url" name="github_url" value="{{ old('github_url', $project->github_url) }}" placeholder="https://github.com/..." class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors">
+                        </div>
+
+                        <!-- Statut Public/Privé -->
+                        <div>
+                            <label class="block text-sm font-semibold text-white mb-2">Visibilité *</label>
+                            <select name="is_published" required class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors">
+                                <option value="1" {{ old('is_published', $project->is_published) == 1 ? 'selected' : '' }}>Public</option>
+                                <option value="0" {{ old('is_published', $project->is_published) == 0 ? 'selected' : '' }}>Privé</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Image du Projet -->
+                    <div>
+                        <label class="block text-sm font-semibold text-white mb-2">Image du Projet</label>
+                        <div class="border-2 border-dashed border-slate-600 rounded-lg p-6 text-center hover:border-purple-500 transition-colors cursor-pointer" onclick="document.getElementById('image-input').click()">
+                            <svg class="w-12 h-12 mx-auto text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <p class="text-white font-medium">Cliquez pour changer l'image</p>
+                            <p class="text-gray-400 text-sm">ou déposez votre fichier ici</p>
+                            <p class="text-gray-500 text-xs mt-2">.jpg, .png, .gif (max 2MB)</p>
+                            <input type="file" id="image-input" name="image" accept="image/*" class="hidden" onchange="previewImage(this)">
+                        </div>
+
+                        <!-- Erreur de validation -->
+                        <div id="image-error" class="mt-2 text-red-400 text-sm hidden"></div>
+
+                        <!-- Image actuelle -->
+                        @if($project->image)
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-300 mb-2">Image actuelle:</p>
+                            <div class="bg-slate-900 rounded-lg p-2 inline-block border border-slate-700">
+                                <div class="relative group">
+                                    <img src="{{ asset('storage/' . $project->image) }}" alt="{{ $project->title }}" class="rounded max-w-full max-h-80 object-contain">
+                                    <button type="button" onclick="clearCurrentImage()" class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        <!-- Aperçu nouvelle image -->
+                        <div id="image-preview" class="mt-4"></div>
+                    </div>
+
+                    <!-- Statistiques -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-700">
+                        <div class="bg-slate-700/50 rounded-lg p-4">
+                            <p class="text-xs text-gray-400">Créé</p>
+                            <p class="text-white font-semibold">{{ $project->created_at->format('d/m/Y') }}</p>
+                        </div>
+                        <div class="bg-slate-700/50 rounded-lg p-4">
+                            <p class="text-xs text-gray-400">Modifié</p>
+                            <p class="text-white font-semibold">{{ $project->updated_at->format('d/m/Y') }}</p>
+                        </div>
+                        <div class="bg-slate-700/50 rounded-lg p-4">
+                            <p class="text-xs text-gray-400">Statut</p>
+                            <p class="text-white font-semibold">{{ $project->is_published ? 'Public' : 'Privé' }}</p>
+                        </div>
+                        <div class="bg-slate-700/50 rounded-lg p-4">
+                            <p class="text-xs text-gray-400">ID</p>
+                            <p class="text-white font-semibold text-sm">#{{ $project->id }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="flex gap-4 pt-6 border-t border-slate-700">
+                        <a href="{{ route('admin.projects.index') }}" class="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors font-medium text-center">
+                            Annuler
+                        </a>
+                        <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all font-medium">
+                            Mettre à jour
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewImage(input) {
+    const errorDiv = document.getElementById('image-error');
+    const preview = document.getElementById('image-preview');
+    
+    errorDiv.classList.add('hidden');
+    errorDiv.textContent = '';
+    
+    if (!input.files || !input.files[0]) {
+        return;
+    }
+    
+    const file = input.files[0];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    
+    // Validation taille
+    if (file.size > maxSize) {
+        errorDiv.textContent = `❌ Fichier trop volumineux: ${(file.size / 1024 / 1024).toFixed(2)}MB (max 2MB)`;
+        errorDiv.classList.remove('hidden');
+        input.value = '';
+        preview.innerHTML = '';
+        return;
+    }
+    
+    // Validation format
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        errorDiv.textContent = `❌ Format non valide: ${file.type}. Utilisez .jpg, .png ou .gif`;
+        errorDiv.classList.remove('hidden');
+        input.value = '';
+        preview.innerHTML = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        preview.innerHTML = `
+            <div class="mt-4">
+                <p class="text-sm text-gray-300 mb-3">Nouvelle image (${(file.size / 1024).toFixed(1)}KB):</p>
+                <div class="bg-slate-900 rounded-lg p-2 inline-block border border-slate-700">
+                    <div class="relative group">
+                        <img src="${e.target.result}" alt="Preview" class="rounded max-w-full max-h-80 object-contain" onerror="this.style.display='none'">
+                        <button type="button" onclick="clearNewImage()" class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+    reader.onerror = function() {
+        errorDiv.textContent = '❌ Erreur lors de la lecture du fichier';
+        errorDiv.classList.remove('hidden');
+        input.value = '';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearCurrentImage() {
+    // On ne supprime que la preview, pas l'image du serveur
+    document.getElementById('image-preview').innerHTML = '';
+}
+
+function clearNewImage() {
+    document.getElementById('image-input').value = '';
+    document.getElementById('image-preview').innerHTML = '';
+    document.getElementById('image-error').classList.add('hidden');
+}
+</script>
+@endsection
